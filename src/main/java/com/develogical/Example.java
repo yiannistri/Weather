@@ -6,7 +6,7 @@ import com.weather.Region;
 
 public class Example {
     public static void main(String[] args) {
-        ForecasterClient forecaster = new CachingForecasterClient(new ForecasterAdaptor());
+        ForecasterClient forecaster = new CachingForecasterClient(new ForecasterAdaptor(), 3);
         doit(forecaster);
         doit(forecaster);
         doit(forecaster);

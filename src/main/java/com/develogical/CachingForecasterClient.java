@@ -4,25 +4,34 @@ import com.weather.Day;
 import com.weather.Forecast;
 import com.weather.Region;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class CachingForecasterClient implements ForecasterClient {
-    private final Map<Key, Forecast> cache = new HashMap<>();
+    private final Map<Key, Forecast> cache = new LinkedHashMap<>();
     private final ForecasterClient delegate;
+    private final int maxSize;
 
-    public CachingForecasterClient(ForecasterClient delegate) {
+    public CachingForecasterClient(ForecasterClient delegate, int maxSize) {
         this.delegate = delegate;
+        this.maxSize = maxSize;
     }
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
+        evictOldestIfNecessary();
         Key key = new Key(region, day);
         if (!cache.containsKey(key)) {
             cache.put(key, delegate.forecastFor(region, day));
         }
         return cache.get(key);
+    }
+
+    private void evictOldestIfNecessary() {
+        if (cache.size() >= maxSize) {
+            cache.remove(cache.keySet().iterator().next());
+        }
     }
 
     static class Key {
