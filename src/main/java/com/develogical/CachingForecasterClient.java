@@ -6,11 +6,9 @@ import com.weather.Region;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
 
 public class CachingForecasterClient implements ForecasterClient {
@@ -27,9 +25,9 @@ public class CachingForecasterClient implements ForecasterClient {
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
-        evictStale();
         evictOldestIfNecessary();
         Key key = new Key(region, day);
+        evictIfStale(key);
         if (!cache.containsKey(key)) {
             Forecast forecast = delegate.forecastFor(region, day);
             Instant evictionTime = now().plus(1, ChronoUnit.HOURS);
@@ -38,20 +36,11 @@ public class CachingForecasterClient implements ForecasterClient {
         return cache.get(key).forecast;
     }
 
-    private void evictStale() {
-        for (Key key : staleKeys()) {
+    private void evictIfStale(Key key) {
+        ForecastWithTime forecastWithTime = cache.get(key);
+        if (forecastWithTime != null && forecastWithTime.isStale(now())) {
             cache.remove(key);
         }
-    }
-
-    private Set<Key> staleKeys() {
-        Set<Key> result = new HashSet<>();
-        for (Map.Entry<Key, ForecastWithTime> keyForecastWithTimeEntry : cache.entrySet()) {
-            if (keyForecastWithTimeEntry.getValue().isStale(now())) {
-                result.add(keyForecastWithTimeEntry.getKey());
-            }
-        }
-        return result;
     }
 
     private void evictOldestIfNecessary() {
