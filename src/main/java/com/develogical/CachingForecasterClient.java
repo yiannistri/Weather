@@ -30,21 +30,15 @@ public class CachingForecasterClient implements ForecasterClient {
     @Override
     public Forecast forecastFor(Region region, Day day) {
         Key key = new Key(region, day);
-        evictIfStale(key);
-        if (!cache.containsKey(key)) {
-            Forecast forecast = delegate.forecastFor(region, day);
-            Instant evictionTime = now().plus(FRESHNESS_LIMIT);
-            cache.put(key, new ForecastWithTime(forecast, evictionTime));
-            evictOldestIfNecessary();
+        ForecastWithTime cachedForecast = cache.get(key);
+        if (cachedForecast != null && cachedForecast.isFresh(now())) {
+            return cachedForecast.forecast;
         }
-        return cache.get(key).forecast;
-    }
-
-    private void evictIfStale(Key key) {
-        ForecastWithTime forecastWithTime = cache.get(key);
-        if (forecastWithTime != null && forecastWithTime.isStale(now())) {
-            cache.remove(key);
-        }
+        Forecast forecast = delegate.forecastFor(region, day);
+        Instant evictionTime = now().plus(FRESHNESS_LIMIT);
+        cache.put(key, new ForecastWithTime(forecast, evictionTime));
+        evictOldestIfNecessary();
+        return forecast;
     }
 
     private void evictOldestIfNecessary() {
@@ -90,8 +84,8 @@ public class CachingForecasterClient implements ForecasterClient {
             this.evictionTime = evictionTime;
         }
 
-        private boolean isStale(Instant now) {
-            return now.isAfter(evictionTime);
+        private boolean isFresh(Instant now) {
+            return !now.isAfter(evictionTime);
         }
     }
 }
