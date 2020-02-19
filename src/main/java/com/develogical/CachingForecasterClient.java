@@ -4,34 +4,64 @@ import com.weather.Day;
 import com.weather.Forecast;
 import com.weather.Region;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class CachingForecasterClient implements ForecasterClient {
-    private final Map<Key, Forecast> cache = new LinkedHashMap<>();
+    private final Supplier<Instant> clock;
+    private final Map<Key, ForecastWithTime> cache = new LinkedHashMap<>();
     private final ForecasterClient delegate;
     private final int maxSize;
 
-    public CachingForecasterClient(ForecasterClient delegate, int maxSize) {
+    public CachingForecasterClient(ForecasterClient delegate, int maxSize, Supplier<Instant> clock) {
         this.delegate = delegate;
         this.maxSize = maxSize;
+        this.clock = clock;
     }
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
+        evictStale();
         evictOldestIfNecessary();
         Key key = new Key(region, day);
         if (!cache.containsKey(key)) {
-            cache.put(key, delegate.forecastFor(region, day));
+            Forecast forecast = delegate.forecastFor(region, day);
+            Instant evictionTime = now().plus(1, ChronoUnit.HOURS);
+            cache.put(key, new ForecastWithTime(forecast, evictionTime));
         }
-        return cache.get(key);
+        return cache.get(key).forecast;
+    }
+
+    private void evictStale() {
+        for (Key key : staleKeys()) {
+            cache.remove(key);
+        }
+    }
+
+    private Set<Key> staleKeys() {
+        Set<Key> result = new HashSet<>();
+        for (Map.Entry<Key, ForecastWithTime> keyForecastWithTimeEntry : cache.entrySet()) {
+            if (keyForecastWithTimeEntry.getValue().isStale(now())) {
+                result.add(keyForecastWithTimeEntry.getKey());
+            }
+        }
+        return result;
     }
 
     private void evictOldestIfNecessary() {
         if (cache.size() >= maxSize) {
             cache.remove(cache.keySet().iterator().next());
         }
+    }
+
+    private Instant now() {
+        return clock.get();
     }
 
     static class Key {
@@ -55,6 +85,20 @@ public class CachingForecasterClient implements ForecasterClient {
         @Override
         public int hashCode() {
             return Objects.hash(region, day);
+        }
+    }
+
+    static class ForecastWithTime {
+        private final Forecast forecast;
+        private final Instant evictionTime;
+
+        ForecastWithTime(Forecast forecast, Instant evictionTime) {
+            this.forecast = forecast;
+            this.evictionTime = evictionTime;
+        }
+
+        private boolean isStale(Instant now) {
+            return now.isAfter(evictionTime);
         }
     }
 }

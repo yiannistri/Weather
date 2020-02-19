@@ -4,9 +4,11 @@ import com.weather.Day;
 import com.weather.Forecast;
 import com.weather.Region;
 
+import java.time.Clock;
+
 public class Example {
     public static void main(String[] args) {
-        ForecasterClient forecaster = new CachingForecasterClient(new ForecasterAdaptor(), 3);
+        ForecasterClient forecaster = new CachingForecasterClient(new ForecasterAdaptor(), 3, () -> Clock.systemUTC().instant());
         doit(forecaster);
         doit(forecaster);
         doit(forecaster);
