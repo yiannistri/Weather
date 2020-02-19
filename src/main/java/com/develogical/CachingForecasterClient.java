@@ -6,6 +6,7 @@ import com.weather.Region;
 
 public class CachingForecasterClient implements ForecasterClient {
     private final ForecasterClient delegate;
+    private Forecast cache;
 
     public CachingForecasterClient(ForecasterClient delegate) {
         this.delegate = delegate;
@@ -13,6 +14,10 @@ public class CachingForecasterClient implements ForecasterClient {
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
-        return delegate.forecastFor(region, day);
+        if (cache != null) {
+            return cache;
+        }
+        cache = delegate.forecastFor(region, day);
+        return cache;
     }
 }
