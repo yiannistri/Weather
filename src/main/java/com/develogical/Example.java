@@ -12,6 +12,10 @@ public class Example {
         doit(forecaster);
         doit(forecaster);
         doit(forecaster);
+        System.out.println("And now more slowly ...");
+        doit(new ForecasterAdaptor());
+        doit(new ForecasterAdaptor());
+        doit(new ForecasterAdaptor());
     }
 
     private static void doit(ForecasterClient forecaster) {
