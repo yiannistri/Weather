@@ -4,14 +4,18 @@ import com.weather.Day;
 import com.weather.Forecast;
 import com.weather.Region;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static java.time.temporal.ChronoUnit.HOURS;
+
 public class CachingForecasterClient implements ForecasterClient {
+    private final static Duration FRESHNESS_LIMIT = Duration.of(1, HOURS);
+
     private final Supplier<Instant> clock;
     private final Map<Key, ForecastWithTime> cache = new LinkedHashMap<>();
     private final ForecasterClient delegate;
@@ -30,7 +34,7 @@ public class CachingForecasterClient implements ForecasterClient {
         evictIfStale(key);
         if (!cache.containsKey(key)) {
             Forecast forecast = delegate.forecastFor(region, day);
-            Instant evictionTime = now().plus(1, ChronoUnit.HOURS);
+            Instant evictionTime = now().plus(FRESHNESS_LIMIT);
             cache.put(key, new ForecastWithTime(forecast, evictionTime));
         }
         return cache.get(key).forecast;
