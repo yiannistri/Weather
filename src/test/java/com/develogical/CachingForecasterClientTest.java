@@ -76,10 +76,9 @@ public class CachingForecasterClientTest {
         forecaster.forecastFor(Region.GLASGOW, Day.FRIDAY);
         forecaster.forecastFor(Region.EDINBURGH, Day.FRIDAY);
         forecaster.forecastFor(Region.EDINBURGH, Day.FRIDAY);
-        forecaster.forecastFor(Region.LONDON, Day.FRIDAY);
-        Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
-        assertThat(forecast.summary(), equalTo("Sunny"));
-        assertThat(forecast.temperature(), equalTo(77));
+        forecaster.forecastFor(Region.LONDON, Day.FRIDAY); // should force the first one out
+
+        forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
 
         verify(delegate, times(2)).forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
         verify(delegate, times(1)).forecastFor(Region.GLASGOW, Day.FRIDAY);
@@ -95,9 +94,7 @@ public class CachingForecasterClientTest {
 
         now = now.plus(1, ChronoUnit.HOURS).plus(1, ChronoUnit.MICROS);
 
-        Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
-        assertThat(forecast.summary(), equalTo("Sunny"));
-        assertThat(forecast.temperature(), equalTo(77));
+        forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
 
         verify(delegate, times(2)).forecastFor(any(), any());
     }
@@ -110,9 +107,7 @@ public class CachingForecasterClientTest {
 
         now = now.plus(1, ChronoUnit.HOURS);
 
-        Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
-        assertThat(forecast.summary(), equalTo("Sunny"));
-        assertThat(forecast.temperature(), equalTo(77));
+        forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
 
         verify(delegate, times(1)).forecastFor(any(), any());
     }
