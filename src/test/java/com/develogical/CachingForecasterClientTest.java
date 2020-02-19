@@ -101,4 +101,19 @@ public class CachingForecasterClientTest {
 
         verify(delegate, times(2)).forecastFor(any(), any());
     }
+
+    @Test
+    public void doesNotEvictsIfJustFreshEnough() {
+        when(delegate.forecastFor(Region.BIRMINGHAM, Day.FRIDAY)).thenReturn(new Forecast("Sunny", 77));
+
+        forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
+
+        now = now.plus(1, ChronoUnit.HOURS);
+
+        Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
+        assertThat(forecast.summary(), equalTo("Sunny"));
+        assertThat(forecast.temperature(), equalTo(77));
+
+        verify(delegate, times(1)).forecastFor(any(), any());
+    }
 }
