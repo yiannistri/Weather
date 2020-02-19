@@ -29,13 +29,13 @@ public class CachingForecasterClient implements ForecasterClient {
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
-        evictOldestIfNecessary();
         Key key = new Key(region, day);
         evictIfStale(key);
         if (!cache.containsKey(key)) {
             Forecast forecast = delegate.forecastFor(region, day);
             Instant evictionTime = now().plus(FRESHNESS_LIMIT);
             cache.put(key, new ForecastWithTime(forecast, evictionTime));
+            evictOldestIfNecessary();
         }
         return cache.get(key).forecast;
     }
