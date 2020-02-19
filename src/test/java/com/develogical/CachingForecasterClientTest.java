@@ -16,13 +16,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class CachingForecasterClientTest {
+    private final ForecasterClient delegate = mock(ForecasterClient.class);
+    private final CachingForecasterClient forecaster = new CachingForecasterClient(delegate);
+
     @Test
     public void getsForecastsFromDelegate() throws Exception {
-        ForecasterClient delegate = mock(ForecasterClient.class);
-
         when(delegate.forecastFor(Region.BIRMINGHAM, Day.FRIDAY)).thenReturn(new Forecast("Sunny", 77));
-
-        CachingForecasterClient forecaster = new CachingForecasterClient(delegate);
 
         Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
         assertThat(forecast.summary(), equalTo("Sunny"));
@@ -31,11 +30,7 @@ public class CachingForecasterClientTest {
 
     @Test
     public void cachesForecastsFromDelegate() throws Exception {
-        ForecasterClient delegate = mock(ForecasterClient.class);
-
         when(delegate.forecastFor(Region.BIRMINGHAM, Day.FRIDAY)).thenReturn(new Forecast("Sunny", 77));
-
-        CachingForecasterClient forecaster = new CachingForecasterClient(delegate);
 
         forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
         Forecast forecast = forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
