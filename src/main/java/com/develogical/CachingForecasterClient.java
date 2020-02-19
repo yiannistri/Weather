@@ -4,9 +4,12 @@ import com.weather.Day;
 import com.weather.Forecast;
 import com.weather.Region;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CachingForecasterClient implements ForecasterClient {
+    private final Map<Region, Forecast> cache = new HashMap<>();
     private final ForecasterClient delegate;
-    private Forecast cache;
 
     public CachingForecasterClient(ForecasterClient delegate) {
         this.delegate = delegate;
@@ -14,10 +17,9 @@ public class CachingForecasterClient implements ForecasterClient {
 
     @Override
     public Forecast forecastFor(Region region, Day day) {
-        if (cache != null) {
-            return cache;
+        if (!cache.containsKey(region)) {
+            cache.put(region, delegate.forecastFor(region, day));
         }
-        cache = delegate.forecastFor(region, day);
-        return cache;
+        return cache.get(region);
     }
 }

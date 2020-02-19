@@ -39,4 +39,15 @@ public class CachingForecasterClientTest {
 
         verify(delegate, times(1)).forecastFor(ArgumentMatchers.<Region>any(), ArgumentMatchers.<Day>any());
     }
+
+    @Test
+    public void returnsDifferentAnswerForDifferentThing() throws Exception {
+        when(delegate.forecastFor(Region.BIRMINGHAM, Day.FRIDAY)).thenReturn(new Forecast("Sunny", 77));
+        when(delegate.forecastFor(Region.GLASGOW, Day.FRIDAY)).thenReturn(new Forecast("Cloudy", 17));
+
+        forecaster.forecastFor(Region.BIRMINGHAM, Day.FRIDAY);
+        Forecast forecast = forecaster.forecastFor(Region.GLASGOW, Day.FRIDAY);
+        assertThat(forecast.summary(), equalTo("Cloudy"));
+        assertThat(forecast.temperature(), equalTo(17));
+    }
 }
