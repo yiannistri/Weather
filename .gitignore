@@ -7,5 +7,5 @@ target
 .settings
 .project
 .DS_Store
-.gradle
-build
+/build
+/.gradle
