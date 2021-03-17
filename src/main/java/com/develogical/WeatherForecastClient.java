@@ -14,7 +14,11 @@ public class WeatherForecastClient {
         this.forecaster = forecaster;
     }
 
-    public Forecast GetForecast(Region region, Day day) {
+    public WeatherForecast GetForecast(Region region, Day day) {
         return forecaster.getResult(region, day);
+    }
+
+    public void setCacheLimit (Integer limit){
+        //Not implemented
     }
 }

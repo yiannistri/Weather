@@ -36,12 +36,18 @@ public class WeatherClientTest {
 
     @Test
     public void getForecastCachesResult() {
-        WeatherForecastAdapter forecaster = mock(WeatherForecastAdapter.class);
-        WeatherForecastClient underTest = new WeatherForecastClient(forecaster);
+        WeatherForecastClient underTest = new WeatherForecastClient();
         Region region = Region.LONDON;
         Day day = Day.MONDAY;
-        Forecast forecast0 = underTest.GetForecast(region,day);
-        Forecast forecast1 = underTest.GetForecast(region,day);
-        assert (forecast0 == forecast1);
+        WeatherForecast forecast0 = underTest.GetForecast(region,day);
+        WeatherForecast forecast1 = underTest.GetForecast(region,day);
+        assert (underTest.forecaster.cache != null);
+    }
+
+    @Test
+    public void setForecasterCacheLimit() {
+        WeatherForecastClient underTest = new WeatherForecastClient();
+        underTest.setCacheLimit(1);
+        assert(underTest.forecaster.cacheLimit == 1);
     }
 }
