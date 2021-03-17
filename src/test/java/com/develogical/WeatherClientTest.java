@@ -72,7 +72,7 @@ public class WeatherClientTest {
 
         assert(underTest.cache.size() == 1);
     }
-/*
+
     @Test
     public void checkIfTimeLimitIsRespected(){
         IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
@@ -80,23 +80,21 @@ public class WeatherClientTest {
         WeatherForecastClient underTest = new WeatherForecastClient(forecaster,2);
 
         Region region = Region.LONDON;
-        Day monday = Day.MONDAY;
         Day tuesday = Day.TUESDAY;
-        WeatherForecast canary = canaryGenerator.getResult(region,monday);
+        WeatherForecast canary = canaryGenerator.getResult(region,tuesday);
         canary.timestamp = new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000));
-        underTest.cache.add(canary);
+        underTest.cache.put(region.name()+ tuesday.name(), canary);
 
         underTest.GetForecast(region,tuesday);
         assert(underTest.cache.size() == 1);
     }
-    */
 
     @Test
     public void fetchesFromCacheRatherThanReading(){
         IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
-        given(forecaster.getResult(Region.LONDON, Day.MONDAY)).willReturn(new WeatherForecast(new Forecast("Hot",30), new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000))));
+        given(forecaster.getResult(Region.LONDON, Day.MONDAY)).willReturn(new WeatherForecast(new Forecast("Hot",30), new Timestamp(System.currentTimeMillis())));
         WeatherForecastClient underTest = new WeatherForecastClient(forecaster,2);
-        WeatherForecast weatherForecast1 = underTest.GetForecast(Region.LONDON, Day.MONDAY);
+        underTest.GetForecast(Region.LONDON, Day.MONDAY);
         WeatherForecast weatherForecast2 = underTest.GetForecast(Region.LONDON, Day.MONDAY);
         assertThat(weatherForecast2.forecast.summary(), equalTo("Hot"));
         verify(forecaster, times(1)).getResult(Region.LONDON, Day.MONDAY);
