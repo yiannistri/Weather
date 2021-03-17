@@ -1,32 +1,34 @@
 package com.develogical;
 
 import com.weather.Day;
-import com.weather.Forecast;
-import com.weather.Forecaster;
 import com.weather.Region;
 import org.junit.Test;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.*;
 
 public class WeatherClientTest {
     @Test
     public void defaultConstructorInitialisesForecaster() {
-        WeatherForecastClient underTest = new WeatherForecastClient();
+        WeatherForecastAdaptor forecaster = mock(WeatherForecastAdaptor.class);
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster);
         assert(underTest.forecaster != null);
     }
 
     @Test
     public void overloadConstructorAssignsForecaster() {
-        WeatherForecastAdapter forecaster = mock(WeatherForecastAdapter.class);
+        WeatherForecastAdaptor forecaster = mock(WeatherForecastAdaptor.class);
         WeatherForecastClient underTest = new WeatherForecastClient(forecaster);
         assert(underTest.forecaster != null);
     }
 
     @Test
     public void getForecastCallsForecastAdaptorWithCorrectParameters() {
-        WeatherForecastAdapter forecaster = mock(WeatherForecastAdapter.class);
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
         WeatherForecastClient underTest = new WeatherForecastClient(forecaster);
         Region region = Region.LONDON;
         Day day = Day.MONDAY;
@@ -36,32 +38,50 @@ public class WeatherClientTest {
 
     @Test
     public void getForecastCachesResult() {
-        WeatherForecastClient underTest = new WeatherForecastClient();
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster);
         Region region = Region.LONDON;
         Day day = Day.MONDAY;
         WeatherForecast forecast0 = underTest.GetForecast(region,day);
         WeatherForecast forecast1 = underTest.GetForecast(region,day);
-        assert (underTest.forecaster.cache != null);
+        assert (underTest.cache != null);
     }
 
     @Test
     public void setForecasterCacheLimit() {
-        WeatherForecastClient underTest = new WeatherForecastClient();
-        underTest.setCacheLimit(1);
-        assert(underTest.forecaster.cacheLimit == 1);
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster,1);
+        assert(underTest.cacheLimit == 1);
     }
 
     @Test
-    public void chechIfMaxLimitHasBeenRecahed(){
-        WeatherForecastClient underTest = new WeatherForecastClient();
-        underTest.setCacheLimit(1);
+    public void checkIfMaxLimitIsRespected(){
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster,1);
 
         Region region = Region.LONDON;
-        Day day = Day.MONDAY;
-        WeatherForecast forecast0 = underTest.GetForecast(region,day);
-        WeatherForecast forecast1 = underTest.GetForecast(region,day);
+        Day monday = Day.MONDAY;
+        Day tuesday = Day.TUESDAY;
+        underTest.GetForecast(region,monday);
+        underTest.GetForecast(region,tuesday);
+        underTest.GetForecast(region,tuesday);
 
-        assert(underTest.forecaster.cache.size() == 1);
+        assert(underTest.cache.size() == 1);
     }
 
+    @Test
+    public void checkIfTimeLimitIsRespected(){
+        WeatherForecastAdaptor canaryGenerator = new WeatherForecastAdaptor();
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster,2);
+
+        Region region = Region.LONDON;
+        Day monday = Day.MONDAY;
+        Day tuesday = Day.TUESDAY;
+        WeatherForecast canary = canaryGenerator.getResult(region,monday);
+        canary.timestamp = new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000));
+        underTest.cache.add(canary);
+
+        underTest.GetForecast(region,tuesday);
+        assert(underTest.cache.size() == 1);
+    }
 }
