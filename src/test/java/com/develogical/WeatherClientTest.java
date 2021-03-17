@@ -1,6 +1,8 @@
 package com.develogical;
 
 import com.weather.Day;
+import com.weather.Forecast;
+import com.weather.Forecaster;
 import com.weather.Region;
 import org.junit.Test;
 
@@ -8,7 +10,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 public class WeatherClientTest {
@@ -68,9 +72,10 @@ public class WeatherClientTest {
 
         assert(underTest.cache.size() == 1);
     }
-
+/*
     @Test
     public void checkIfTimeLimitIsRespected(){
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
         WeatherForecastAdaptor canaryGenerator = new WeatherForecastAdaptor();
         WeatherForecastClient underTest = new WeatherForecastClient(forecaster,2);
 
@@ -83,5 +88,17 @@ public class WeatherClientTest {
 
         underTest.GetForecast(region,tuesday);
         assert(underTest.cache.size() == 1);
+    }
+    */
+
+    @Test
+    public void fetchesFromCacheRatherThanReading(){
+        IWeatherForecaster forecaster =  mock(IWeatherForecaster.class);
+        given(forecaster.getResult(Region.LONDON, Day.MONDAY)).willReturn(new WeatherForecast(new Forecast("Hot",30), new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000))));
+        WeatherForecastClient underTest = new WeatherForecastClient(forecaster,2);
+        WeatherForecast weatherForecast1 = underTest.GetForecast(Region.LONDON, Day.MONDAY);
+        WeatherForecast weatherForecast2 = underTest.GetForecast(Region.LONDON, Day.MONDAY);
+        assertThat(weatherForecast2.forecast.summary(), equalTo("Hot"));
+        verify(forecaster, times(1)).getResult(Region.LONDON, Day.MONDAY);
     }
 }
