@@ -50,4 +50,18 @@ public class WeatherClientTest {
         underTest.setCacheLimit(1);
         assert(underTest.forecaster.cacheLimit == 1);
     }
+
+    @Test
+    public void chechIfMaxLimitHasBeenRecahed(){
+        WeatherForecastClient underTest = new WeatherForecastClient();
+        underTest.setCacheLimit(1);
+
+        Region region = Region.LONDON;
+        Day day = Day.MONDAY;
+        WeatherForecast forecast0 = underTest.GetForecast(region,day);
+        WeatherForecast forecast1 = underTest.GetForecast(region,day);
+
+        assert(underTest.forecaster.cache.size() == 1);
+    }
+
 }

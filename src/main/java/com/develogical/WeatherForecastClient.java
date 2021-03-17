@@ -19,6 +19,6 @@ public class WeatherForecastClient {
     }
 
     public void setCacheLimit (Integer limit){
-        //Not implemented
+        this.forecaster.setCacheLimit(limit);
     }
 }

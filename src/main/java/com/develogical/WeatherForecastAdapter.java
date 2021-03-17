@@ -24,6 +24,6 @@ public class WeatherForecastAdapter implements IWeatherForecaster {
     }
 
     public void setCacheLimit(Integer limit){
-        //Not implemented
+        this.cacheLimit = limit;
     }
 }
